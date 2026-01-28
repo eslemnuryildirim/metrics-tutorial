@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-prometheus-backup
+  namespace: {{ .Release.Namespace }}
+spec:
+  schedule: "0 2 * * *"  # Her gün saat 02:00
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: backup
+            image: minio/mc:latest
+            command:
+            - /bin/sh
+            - -c
+            - |
+              mc alias set myminio http://{{ .Release.Name }}-minio:9000 admin minio123
+              mc mb myminio/metrics --ignore-existing
+              mc mirror /prometheus myminio/metrics/$(date +%Y-%m-%d)
+          restartPolicy: OnFailure

@@ -1,0 +1,64 @@
+# MinIO - Object Storage
+minio:
+  mode: standalone
+  rootUser: admin
+  rootPassword: minio123
+  
+  persistence:
+    enabled: true
+    size: 5Gi
+  
+  resources:
+    requests:
+      memory: 128Mi
+      cpu: 50m
+  
+  buckets:
+    - name: metrics
+      policy: none
+
+# Prometheus Stack
+kube-prometheus-stack:
+  prometheus:
+    prometheusSpec:
+      retention: 90d
+      retentionSize: "4GB"
+      
+      resources:
+        requests:
+          memory: 256Mi
+          cpu: 100m
+      
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            resources:
+              requests:
+                storage: 5Gi
+
+  grafana:
+    enabled: true
+    adminPassword: admin
+    
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
+
+  # Metrics topla
+  nodeExporter:
+    enabled: true
+
+  kubeStateMetrics:
+    enabled: true
+
+  # Gereksiz componentler kapat
+  alertmanager:
+    enabled: false
+  
+  prometheusOperator:
+    resources:
+      requests:
+        memory: 64Mi
+        cpu: 50m
