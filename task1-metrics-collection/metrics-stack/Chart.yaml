@@ -1,13 +1,10 @@
 apiVersion: v2
 name: metrics-stack
-description: Simple Kubernetes metrics collection with MinIO storage
-type: application
 version: 1.0.0
-
 dependencies:
+  - name: prometheus
+    version: "25.0.0"
+    repository: "https://prometheus-community.github.io/helm-charts"
   - name: minio
-    version: 5.0.14
-    repository: https://charts.min.io/
-  - name: kube-prometheus-stack
-    version: 55.5.0
-    repository: https://prometheus-community.github.io/helm-charts
+    version: "5.0.0"
+    repository: "https://charts.min.io/"

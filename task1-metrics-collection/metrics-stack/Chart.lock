@@ -1,9 +1,9 @@
 dependencies:
+- name: prometheus
+  repository: https://prometheus-community.github.io/helm-charts
+  version: 25.0.0
 - name: minio
   repository: https://charts.min.io/
-  version: 5.0.14
-- name: kube-prometheus-stack
-  repository: https://prometheus-community.github.io/helm-charts
-  version: 55.5.0
-digest: sha256:81db07d97cf7e2aa9639c6d3c2a73566e9bf4115817976a6aa2c6bab3508d510
-generated: "2026-01-28T09:23:55.529977031Z"
+  version: 5.0.0
+digest: sha256:7ae5526a9c0ebd80b6c599fc79552c7df73d39d63e17701895821a7018527570
+generated: "2026-01-29T07:51:40.433388714Z"
