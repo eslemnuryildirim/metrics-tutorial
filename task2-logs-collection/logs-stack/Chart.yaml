@@ -1,0 +1,10 @@
+apiVersion: v2
+name: logs-stack
+version: 1.0.0
+dependencies:
+  - name: fluent-bit
+    version: "0.20.0"
+    repository: "https://fluent.github.io/helm-charts"
+  - name: minio
+    version: "5.0.0"
+    repository: "https://charts.min.io/"

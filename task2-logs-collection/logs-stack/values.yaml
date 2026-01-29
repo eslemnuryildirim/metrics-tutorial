@@ -1,0 +1,58 @@
+fluent-bit:
+  config:
+    service: |
+      [SERVICE]
+          Daemon Off
+          Flush 1
+          Log_Level info
+          Parsers_File parsers.conf
+          Parsers_File custom_parsers.conf
+          HTTP_Server On
+          HTTP_Listen 0.0.0.0
+          HTTP_Port 2020
+          Health_Check On
+
+    inputs: |
+      [INPUT]
+          Name tail
+          Tag kube.*
+          Path /var/log/containers/*.log
+          Parser docker
+          DB /var/log/flb_kube.db
+          Mem_Buf_Limit 5MB
+          Skip_Long_Lines On
+
+    outputs: |
+      [OUTPUT]
+          Name s3
+          Match kube.*
+          bucket logs
+          region us-east-1
+          s3_key_format /logs/%Y/%m/%d/%H/%M/%S-$UUID.log
+          store_dir /var/log/flb-storage/
+          retry_limit 5
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+minio:
+  mode: standalone
+  rootUser: admin
+  rootPassword: minio123
+  resources:
+    limits:
+      cpu: 500m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+  persistence:
+    size: 2Gi
+  buckets:
+    - name: logs
+      policy: public
