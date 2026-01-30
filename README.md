@@ -173,9 +173,6 @@ DaemonSet ile her node'da otomatik çalışıyor.
 ### Utilization Nedir?
 Utilization, bir sistem kaynağının toplam kapasitesine göre ne kadarının aktif olarak kullanıldığını ifade eder.
 
-**Örnekler:**
-- CPU utilization %70 → CPU'nun %70'i kullanılıyor
-- Memory utilization %40 → Belleğin %40'ı kullanılıyor
 
 ### Kurulum
 ```bash
