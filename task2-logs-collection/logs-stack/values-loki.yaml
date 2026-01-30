@@ -1,0 +1,30 @@
+loki:
+  auth_enabled: false
+
+  schemaConfig:
+    configs:
+      - from: "2024-01-01"
+        store: boltdb-shipper
+        object_store: s3
+        schema: v11
+        index:
+          prefix: loki_index_
+          period: 24h
+
+  storage_config:
+    boltdb_shipper:
+      active_index_directory: /var/loki/index
+      cache_location: /var/loki/cache
+      shared_store: s3
+    aws:
+      s3: http://admin:minio123@logs-stack-minio.logs.svc.cluster.local:9000/loki
+      s3forcepathstyle: true
+
+  compactor:
+    shared_store: s3
+
+  limits_config:
+    retention_period: 2160h  # 90 gün
+
+promtail:
+  enabled: true

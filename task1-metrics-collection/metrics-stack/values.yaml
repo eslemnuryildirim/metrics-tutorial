@@ -1,35 +1,81 @@
 prometheus:
   prometheusSpec:
     retention: 90d
-    retentionSize: "2GB"
+    retentionSize: "1GB"
+
     resources:
       requests:
-        memory: "256Mi"
-        cpu: "100m"
+        memory: "100Mi"
+        cpu: "50m"
       limits:
-        memory: "512Mi"
-        cpu: "500m"
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 2Gi
+        memory: "200Mi"
+        cpu: "100m"
+
+    thanos:
+      image: quay.io/thanos/thanos:v0.35.1
+      objectStorageConfig:
+        name: thanos-objstore
+        key: object-store.yaml
+
 
 minio:
   mode: standalone
+
   rootUser: admin
   rootPassword: minio123
+
   resources:
     requests:
       memory: "128Mi"
-      cpu: "100m"
+      cpu: "50m"
     limits:
       memory: "256Mi"
-      cpu: "500m"
+      cpu: "200m"
+
   persistence:
-    size: 1Gi
-  buckets:
-    - name: metrics
-      policy: public
+    enabled: true
+    size: 5Gi
+
+  replicas: 1
+
+  users: []
+grafana:
+  adminPassword: "admin123"   # istersen değiştir
+
+  service:
+    type: ClusterIP
+
+  datasources:
+    datasources.yaml:
+      apiVersion: 1
+      datasources:
+        - name: Prometheus
+          type: prometheus
+          access: proxy
+          isDefault: true
+          url: http://metrics-stack-prometheus-server
+          editable: true
+
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: "default"
+          orgId: 1
+          folder: ""
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/default
+
+  dashboards:
+    default:
+      node-exporter-full:
+        gnetId: 1860
+        revision: 37
+        datasource: Prometheus
+      kubernetes-cluster:
+        gnetId: 6417
+        revision: 1
+        datasource: Prometheus

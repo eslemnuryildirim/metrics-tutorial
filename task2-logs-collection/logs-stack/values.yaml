@@ -28,6 +28,7 @@ fluent-bit:
           Match kube.*
           bucket logs
           region us-east-1
+          endpoint http://logs-stack-minio.logs.svc.cluster.local:9000
           s3_key_format /logs/%Y/%m/%d/%H/%M/%S-$UUID.log
           store_dir /var/log/flb-storage/
           retry_limit 5
