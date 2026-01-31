@@ -225,5 +225,156 @@ sum by (pod) (
 - **Grafana**: http://localhost:3000 (admin/grafana123)
 - **Prometheus**: http://localhost:8080
 
+### Screenshots
+
+![Helm List](task3/helmlist.png)
+![Node Exporter](task3/nodeexpoter.png)
+![Node Memory](task3/nodememory.png)
+![Prometheus Node](task3/prometheusnode.png)
+
 ### Sonuç
 Kubernetes cluster'ındaki node ve pod metrikleri Grafana ile başarıyla görselleştirildi. Sistem kaynaklarının utilization değerleri izlenebilir hale getirildi.
+
+## Task 4: Kelime ile Arama (Search)
+
+Görev: Logların içerisinde arama yapın
+Ödev Detayı: Topladığınız pod ve nodeların loglarının içerisinde "error" ve "info" kelimelerini aratın ve kaç adet bulduğunuzu görselleştirin
+Soru: Search engine nedir?
+
+### Search Engine Nedir?
+Search engine, büyük miktardaki veri içerisinde belirli kelime veya desenlere göre hızlı arama yapmayı sağlayan sistemdir. Log yönetiminde search engine; uygulama, pod ve node logları içerisinden error, info gibi kritik kayıtları bulmak ve analiz etmek için kullanılır. Bu görevde Grafana Loki, loglar üzerinde arama yapan bir search engine olarak kullanılmıştır.
+
+### Yapılan İşlemler
+- Kubernetes pod ve node logları Loki ile toplandı
+- Loglar içerisinde "error" ve "info" kelimeleri arandı
+- Bulunan kayıt sayıları Grafana üzerinde görselleştirildi
+
+### Kullanılan Query'ler
+
+#### ERROR log sayısı (son 30 dakika)
+```logql
+sum(
+  count_over_time(
+    {job=~".+"}
+    | json
+    | log=~".*(error|ERROR).*"
+    [30m]
+  )
+)
+```
+
+#### INFO log sayısı (son 30 dakika)
+```logql
+sum(
+  count_over_time(
+    {job=~".+"}
+    | json
+    | log=~".*level=info.*"
+    [30m]
+  )
+)
+```
+
+### Screenshot
+
+![Log Count Search](task4/count.png)
+
+## Task 5: Alarm Üretme
+
+Görev: CPU ve Memory kullanımı için alarm üretin
+Ödev Detayı: CPU utilization 5 dakika boyunca %200 kullanıldığında ve Memory kullanımı 1 dakika boyunca %90 olduğunda alarm üretin
+Soru: İncident nedir? Nasıl manage edilir?
+
+### İncident Nedir?
+İncident, sistem veya servislerin normal çalışmasını engelleyen beklenmeyen olay veya durumdur. Örneğin; sistem çökmesi, performans düşüklüğü, güvenlik ihlali gibi durumlar incident olarak kabul edilir.
+
+**İncident Management Süreci:**
+1. **Detection** - Otomatik monitoring veya kullanıcı bildirimi ile tespit
+2. **Response** - İlk müdahale ekibinin devreye girmesi
+3. **Diagnosis** - Problemin kök nedeninin analizi
+4. **Resolution** - Geçici veya kalıcı çözümün uygulanması
+5. **Recovery** - Sistemin normal duruma getirilmesi
+6. **Post-Incident Review** - Olayın analizi ve iyileştirme önerilerinin çıkarılması
+
+### Yapılan İşlemler
+
+**Amaç:** CPU ve Memory metrikleri belirlenen eşikleri aştığında otomatik alarm üretmek ve mail ile bildirmek. Tüm yapı Helm + configuration (provisioning) ile kurulmuştur, UI üzerinden manuel işlem yapılmamıştır.
+
+**Kullanılan Bileşenler:**
+- Prometheus → Metrikleri toplar
+- Node Exporter → Node CPU / Memory metriklerini üretir
+- Grafana → Metrikleri okur, alarm üretir
+- Grafana Unified Alerting → Alert değerlendirme & bildirim
+- SMTP (Gmail) → Mail gönderimi
+- Helm → Tüm konfigürasyonun yönetimi
+
+**Genel Akış:**
+Node Metrics → Prometheus → Grafana → Alert Rule (YAML) → Alertmanager (Grafana) → SMTP → Mail
+
+### Alert Rule'lar Nasıl Tanımlandı?
+
+Alert kuralları UI'dan değil, `rules.yaml` dosyası ile tanımlandı. Bu dosya:
+- CPU / Memory hesaplama ifadelerini (PromQL)
+- Eşik değerleri
+- Firing süresini (for)
+- Label ve annotation'ları içerir
+
+**Örnek (Memory):**
+```promql
+100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 90
+```
+
+### ConfigMap Kullanımı
+
+Grafana alert rule'ları container içinden dosya olarak okumak zorundadır. Bu yüzden:
+
+```bash
+kubectl create configmap grafana-alerts --from-file=rules.yaml
+```
+
+### Mount Mantığı
+
+Grafana Helm chart'ında şu ayar yapıldı:
+
+```yaml
+extraConfigmapMounts:
+  - name: grafana-alerts
+    configMap: grafana-alerts
+    mountPath: /etc/grafana/provisioning/alerting
+    readOnly: true
+```
+
+Bu ne anlama geliyor?
+- `grafana-alerts` ConfigMap'i
+- Grafana container'ının içine `/etc/grafana/provisioning/alerting` dizinine
+- dosya olarak mount edilir
+- Grafana startup sırasında bu dizini tarar ve alert rule'ları otomatik yükler
+
+### SMTP (Mail) Konfigürasyonu
+
+Mail gönderimi Grafana üzerinden yapılır:
+- SMTP ayarları `grafana.ini` ile verildi
+- Gmail için App Password kullanıldı
+- Alert firing olduğunda mail otomatik gönderildi
+
+### Deploy
+
+```bash
+helm upgrade --install metrics-stack . \
+  -n monitoring \
+  -f values.yaml \
+  -f values-task5.yaml
+```
+
+### Screenshots
+
+![Normal Durum](task-5-alarm/ss/normal%20dyrym.png)
+![Alert Firing](task-5-alarm/ss/firing.png)
+![Mail Bildirimi](task-5-alarm/ss/mail.PNG)
+
+### Sonuç
+- Alert rule'lar Helm ile tanımlandı
+- ConfigMap + volume mount ile Grafana'ya okutuldu
+- Alert firing olduğunda mail başarıyla gönderildi
+
+done
