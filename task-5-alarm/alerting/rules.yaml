@@ -4,12 +4,11 @@ groups:
   - orgId: 1
     name: task5-alerts
     folder: Task-5
-    interval: 1m
+    interval: 30s
     rules:
-
-      - uid: task5-cpu-200
+      - uid: cpu-util-200
         title: CPU Utilization > 200% (5m)
-        condition: C
+        condition: A
         data:
           - refId: A
             datasourceUid: PBFA97CFB590B2093
@@ -17,76 +16,69 @@ groups:
               from: 300
               to: 0
             model:
-              expr: 100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
-              intervalMs: 1000
-              maxDataPoints: 43200
-          - refId: B
-            datasourceUid: __expr__
-            model:
-              type: reduce
-              reducer: last
-              expression: A
-          - refId: C
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: B
-              conditions:
-                - evaluator:
-                    type: gt
-                    params: [200]
-                  operator:
-                    type: and
-                  reducer:
-                    type: last
-                  type: query
-
+              expr: (100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))) > 200
+              instant: true
         for: 5m
         noDataState: NoData
         execErrState: Error
         annotations:
-          summary: "CPU utilization 5 dakika boyunca %200 üzeri"
+          summary: "CPU utilization 5m boyunca %200 üstü"
         labels:
-          severity: warning
+          severity: critical
 
-      - uid: task5-mem-90
+      - uid: mem-util-90
         title: Memory Utilization > 90% (1m)
-        condition: C
+        condition: A
         data:
           - refId: A
             datasourceUid: PBFA97CFB590B2093
             relativeTimeRange:
-              from: 300
+              from: 60
               to: 0
             model:
-              expr: 100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
-              intervalMs: 1000
-              maxDataPoints: 43200
-          - refId: B
-            datasourceUid: __expr__
-            model:
-              type: reduce
-              reducer: last
-              expression: A
-          - refId: C
-            datasourceUid: __expr__
-            model:
-              type: threshold
-              expression: B
-              conditions:
-                - evaluator:
-                    type: gt
-                    params: [90]
-                  operator:
-                    type: and
-                  reducer:
-                    type: last
-                  type: query
-
+              expr: (100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))) > 90
+              instant: true
         for: 1m
         noDataState: NoData
         execErrState: Error
         annotations:
-          summary: "Memory utilization 1 dakika boyunca %90 üzeri"
+          summary: "Memory utilization 1m boyunca %90 üstü"
         labels:
           severity: critical
+
+      # --- TEST RULES (FIRING görmek için) ---
+      - uid: cpu-test
+        title: TEST CPU > 5% (10s)
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 60
+              to: 0
+            model:
+              expr: (100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[1m])))) > 5
+              instant: true
+        for: 10s
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: test
+
+      - uid: mem-test
+        title: TEST MEM > 50% (10s)
+        condition: A
+        data:
+          - refId: A
+            datasourceUid: PBFA97CFB590B2093
+            relativeTimeRange:
+              from: 60
+              to: 0
+            model:
+              expr: (100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))) > 50
+              instant: true
+        for: 10s
+        noDataState: NoData
+        execErrState: Error
+        labels:
+          severity: test

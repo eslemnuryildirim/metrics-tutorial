@@ -1,9 +1,22 @@
 grafana:
+  envValueFrom:
+    GF_SMTP_PASSWORD:
+      secretKeyRef:
+        name: grafana-smtp
+        key: GF_SMTP_PASSWORD
+
   grafana.ini:
     unified_alerting:
       enabled: true
-    alerting:
-      enabled: false
+
+    smtp:
+      enabled: true
+      host: smtp.gmail.com:587
+      user: eslemyldrrm@gmail.com
+      password: $__env{GF_SMTP_PASSWORD}
+      from_address: eslemyldrrm@gmail.com
+      from_name: Grafana
+      startTLS_policy: MandatoryStartTLS
 
   extraConfigmapMounts:
     - name: grafana-alerts
