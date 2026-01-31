@@ -167,3 +167,63 @@ MinIO Console - http://localhost:9002 (admin/minio123):
 Kubernetes pod/node logları Fluent-bit ile toplanıyor.
 MinIO object storage'da 90 gün saklanıyor.
 DaemonSet ile her node'da otomatik çalışıyor.
+
+## Task 3: Grafana ile Görselleştirme
+
+### Utilization Nedir?
+Utilization, bir sistem kaynağının toplam kapasitesine göre ne kadarının aktif olarak kullanıldığını ifade eder.
+
+
+### Kurulum
+```bash
+kubectl create namespace visualization
+helm install visualization-release ./visualization-stack -n visualization
+```
+
+### Görselleştirilen Metrikler
+
+**Node Metrikleri:**
+- Node CPU Utilization (%)
+- Node Memory Utilization (%)
+
+**Pod Metrikleri:**
+- Pod CPU Usage
+- Pod Memory Usage
+
+### Kullanılan PromQL Query'leri
+
+**Node CPU Utilization (%):**
+```promql
+100 * (1 - avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])))
+```
+
+**Node Memory Utilization (%):**
+```promql
+100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes))
+```
+
+**Pod CPU Usage:**
+```promql
+sum by (pod) (
+  rate(container_cpu_usage_seconds_total{container!="",pod!=""}[5m])
+)
+```
+
+**Pod Memory Usage (MB):**
+```promql
+sum by (pod) (
+  container_memory_working_set_bytes{container!="",pod!=""}
+) / 1024 / 1024
+```
+
+### Dashboard'lar
+- **Kubernetes Cluster**: Genel cluster durumu
+- **Resource Utilization**: Node ve pod kaynak kullanımı
+- **Node Exporter Full**: Detaylı node metrikleri
+
+### Erişim
+- **Grafana**: http://localhost:3000 (admin/grafana123)
+- **Prometheus**: http://localhost:8080
+
+### Sonuç
+Kubernetes cluster'ındaki node ve pod metrikleri Grafana ile başarıyla görselleştirildi. Sistem kaynaklarının utilization değerleri izlenebilir hale getirildi.
