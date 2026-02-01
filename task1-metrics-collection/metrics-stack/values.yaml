@@ -1,21 +1,51 @@
 prometheus:
-  prometheusSpec:
-    retention: 90d
-    retentionSize: "1GB"
+  server:
+    retention: "90d"
+    extraArgs:
+      storage.tsdb.min-block-duration: 2m
+      storage.tsdb.max-block-duration: 2m
 
-    resources:
-      requests:
-        memory: "100Mi"
-        cpu: "50m"
-      limits:
-        memory: "200Mi"
-        cpu: "100m"
+    service:
+      gRPC:
+        enabled: true
+        servicePort: 10901
+    global:
+      external_labels:
+        cluster: minikube
+        replica: "0"
 
-    thanos:
-      image: quay.io/thanos/thanos:v0.35.1
-      objectStorageConfig:
-        name: thanos-objstore
-        key: object-store.yaml
+    extraVolumes:
+      - name: thanos-objstore
+        secret:
+          secretName: thanos-objstore
+
+    extraVolumeMounts:
+      - name: thanos-objstore
+        mountPath: /etc/thanos
+        readOnly: true
+
+    sidecarContainers:
+      thanos-sidecar: |-
+        image: quay.io/thanos/thanos:v0.35.1
+        args:
+          - sidecar
+          - --log.level=info
+          - --tsdb.path=/data
+          - --prometheus.url=http://127.0.0.1:9090
+          - --grpc-address=0.0.0.0:10901
+          - --http-address=0.0.0.0:10902
+          - --objstore.config-file=/etc/thanos/object-store.yaml
+        ports:
+          - name: grpc
+            containerPort: 10901
+          - name: http
+            containerPort: 10902
+        volumeMounts:
+          - name: storage-volume
+            mountPath: /data
+          - name: thanos-objstore
+            mountPath: /etc/thanos
+            readOnly: true
 
 
 minio:
