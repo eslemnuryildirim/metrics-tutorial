@@ -98,8 +98,6 @@ kubectl port-forward -n metrics svc/metrics-release-minio-console 9001:9001
 ![Helm Dependency Update](task1-metrics-collection/screenshots/helmdependecyupdate.png)
 ![Helm Lint](task1-metrics-collection/screenshots/helmlint.png)
 ![Helm Install](task1-metrics-collection/screenshots/helminstall.png)
-![Prometheus Port Forwarding](task1-metrics-collection/screenshots/prometheusportforwarding.png)
-![MinIO Port Forwarding](task1-metrics-collection/screenshots/minioportforwarding.png)
 
 ### Sonuç
 
@@ -107,7 +105,8 @@ kubectl port-forward -n metrics svc/metrics-release-minio-console 9001:9001
 ![Prometheus](task1-metrics-collection/screenshots/prometheus.png)
 
 **MinIO:** http://localhost:9001 (admin/minio123)
-![Object Store](task1-metrics-collection/screenshots/object%20store.png)
+![MinIO Console 1](task1-metrics-collection/screenshots/minio1.png)
+![MinIO Console 2](task1-metrics-collection/screenshots/minio2.png)
 
 - Kubernetes pod ve node metrikleri toplanıyor
 - MinIO object storage'da 90 gün saklanıyor
